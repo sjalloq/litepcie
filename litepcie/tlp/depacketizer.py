@@ -19,15 +19,17 @@ class LitePCIeTLPHeaderExtracter64b(LiteXModule):
 
         # # #
 
-        first = Signal()
-        last  = Signal()
-        count = Signal()
-        dat   = Signal(64,    reset_less=True)
-        be    = Signal(64//8, reset_less=True)
+        first   = Signal()
+        last    = Signal()
+        count   = Signal()
+        dat     = Signal(64,    reset_less=True)
+        be      = Signal(64//8, reset_less=True)
+        bar_hit = Signal(6,     reset_less=True)
         self.sync += \
             If(sink.valid & sink.ready,
                 dat.eq(sink.dat),
-                be.eq(sink.be)
+                be.eq(sink.be),
+                If(sink.first, bar_hit.eq(sink.bar_hit))
             )
 
         self.fsm = fsm = FSM(reset_state="IDLE")
@@ -65,7 +67,9 @@ class LitePCIeTLPHeaderExtracter64b(LiteXModule):
             source.dat[32*0:32*1].eq(     dat[32*1:32*2]),
             source.dat[32*1:32*2].eq(sink.dat[32*0:32*1]),
             source.be[  4*0: 4*1].eq(     be[4*1:4*2]),
-            source.be[  4*1: 4*2].eq(sink.be[4*0:4*1])
+            source.be[  4*1: 4*2].eq(sink.be[4*0:4*1]),
+
+            source.bar_hit.eq(bar_hit),
         ]
 
 # LitePCIeTLPHeaderExtracter128b -------------------------------------------------------------------
@@ -77,14 +81,16 @@ class LitePCIeTLPHeaderExtracter128b(LiteXModule):
 
         # # #
 
-        first = Signal()
-        last  = Signal()
-        dat   = Signal(128,    reset_less=True)
-        be    = Signal(128//8, reset_less=True)
+        first   = Signal()
+        last    = Signal()
+        dat     = Signal(128,    reset_less=True)
+        be      = Signal(128//8, reset_less=True)
+        bar_hit = Signal(6,      reset_less=True)
         self.sync += \
             If(sink.valid & sink.ready,
                 dat.eq(sink.dat),
-                be.eq(sink.be)
+                be.eq(sink.be),
+                If(sink.first, bar_hit.eq(sink.bar_hit))
             )
 
         self.fsm = fsm = FSM(reset_state="IDLE")
@@ -129,6 +135,8 @@ class LitePCIeTLPHeaderExtracter128b(LiteXModule):
             source.be[  4*1: 4*2].eq(   sink.be[4*0:4*1]),
             source.be[  4*2: 4*3].eq(   sink.be[4*1:4*2]),
             source.be[  4*1: 4*2].eq(   sink.be[4*2:4*3]),
+
+            source.bar_hit.eq(bar_hit),
         ]
 
 # LitePCIeTLPHeaderExtracter256b -------------------------------------------------------------------
@@ -140,14 +148,16 @@ class LitePCIeTLPHeaderExtracter256b(LiteXModule):
 
         # # #
 
-        first = Signal()
-        last  = Signal()
-        dat   = Signal(256,    reset_less=True)
-        be    = Signal(256//8, reset_less=True)
+        first   = Signal()
+        last    = Signal()
+        dat     = Signal(256,    reset_less=True)
+        be      = Signal(256//8, reset_less=True)
+        bar_hit = Signal(6,      reset_less=True)
         self.sync += \
             If(sink.valid & sink.ready,
                 dat.eq(sink.dat),
-                be.eq(sink.be)
+                be.eq(sink.be),
+                If(sink.first, bar_hit.eq(sink.bar_hit))
             )
 
         self.fsm = fsm = FSM(reset_state="IDLE")
@@ -200,7 +210,9 @@ class LitePCIeTLPHeaderExtracter256b(LiteXModule):
             source.be[4*4:4*5].eq(     be[4*7:4*8]),
             source.be[4*5:4*6].eq(sink.be[4*0:4*1]),
             source.be[4*6:4*7].eq(sink.be[4*1:4*2]),
-            source.be[4*7:4*8].eq(sink.be[4*2:4*3])
+            source.be[4*7:4*8].eq(sink.be[4*2:4*3]),
+
+            source.bar_hit.eq(bar_hit),
         ]
 
 # LitePCIeTLPHeaderExtracter512b -------------------------------------------------------------------
@@ -212,14 +224,16 @@ class LitePCIeTLPHeaderExtracter512b(LiteXModule):
 
         # # #
 
-        first = Signal()
-        last  = Signal()
-        dat   = Signal(512,    reset_less=True)
-        be    = Signal(512//8, reset_less=True)
+        first   = Signal()
+        last    = Signal()
+        dat     = Signal(512,    reset_less=True)
+        be      = Signal(512//8, reset_less=True)
+        bar_hit = Signal(6,      reset_less=True)
         self.sync += \
             If(sink.valid & sink.ready,
                 dat.eq(sink.dat),
-                be.eq(sink.be)
+                be.eq(sink.be),
+                If(sink.first, bar_hit.eq(sink.bar_hit))
             )
 
         self.fsm = fsm = FSM(reset_state="IDLE")
@@ -290,6 +304,8 @@ class LitePCIeTLPHeaderExtracter512b(LiteXModule):
             source.be[4*13:4*14].eq(sink.be[ 4*0: 4*1]),
             source.be[4*14:4*15].eq(sink.be[ 4*1: 4*2]),
             source.be[4*15:4*16].eq(sink.be[ 4*2: 4*3]),
+
+            source.bar_hit.eq(bar_hit),
         ]
 
 # LitePCIeTLPDepacketizer --------------------------------------------------------------------------
@@ -401,7 +417,8 @@ class LitePCIeTLPDepacketizer(LiteXModule):
                 req_source.len.eq(tlp_req.length),
                 req_source.req_id.eq(tlp_req.requester_id),
                 req_source.tag.eq(tlp_req.tag),
-                req_source.dat.eq(tlp_req.dat)
+                req_source.dat.eq(tlp_req.dat),
+                req_source.bar_hit.eq(tlp_req.bar_hit),
             ]
 
         # Decode/Dispatch TLP Completions ----------------------------------------------------------
@@ -415,7 +432,7 @@ class LitePCIeTLPDepacketizer(LiteXModule):
             ]
 
             self.tlp_cmp = tlp_cmp = stream.Endpoint(tlp_completion_layout(data_width))
-            self.comb += dispatch_sources["COMPLETION"].connect(tlp_cmp)
+            self.comb += dispatch_sources["COMPLETION"].connect(tlp_cmp, omit={"bar_hit"})
             self.comb += tlp_completion_header.decode(header, tlp_cmp)
 
             self.comb += [

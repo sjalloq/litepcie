@@ -839,7 +839,7 @@ class LitePCIeTLPPacketizer(LiteXModule):
                 tlp_req.tc.eq(0),
                 tlp_req.td.eq(0),
                 tlp_req.ep.eq(0),
-                tlp_req.attr.eq(0),
+                tlp_req.attr.eq(req_sink.attr),
                 tlp_req.length.eq(req_sink.len),
 
                 tlp_req.requester_id.eq(req_sink.req_id),

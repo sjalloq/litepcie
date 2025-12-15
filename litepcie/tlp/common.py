@@ -238,10 +238,11 @@ def tlp_raw_layout(data_width):
         EndpointDescription: Raw TLP endpoint description.
     """
     layout = [
-        ("fmt",    2),            # Format field.
-        ("header", 4*32),         # Header field.
-        ("dat",    data_width),   # Data field.
-        ("be",     data_width//8) # Byte Enable field.
+        ("fmt",     2),             # Format field.
+        ("header",  4*32),          # Header field.
+        ("dat",     data_width),    # Data field.
+        ("be",      data_width//8), # Byte Enable field.
+        ("bar_hit", 6)              # BAR hit
     ]
     return EndpointDescription(layout)
 
@@ -257,8 +258,9 @@ def tlp_common_layout(data_width):
         EndpointDescription: Common TLP endpoint description.
     """
     layout = tlp_common_header.get_layout() + [
-        ("dat", data_width),   # Data field.
-        ("be",  data_width//8) # Byte Enable field.
+        ("dat",     data_width),    # Data field.
+        ("be",      data_width//8), # Byte Enable field.
+        ("bar_hit", 6)              # BAR hit
     ]
     return EndpointDescription(layout)
 
@@ -291,8 +293,9 @@ def tlp_request_layout(data_width):
         EndpointDescription: Request TLP endpoint description.
     """
     layout = tlp_request_header.get_layout() + [
-        ("dat", data_width),   # Data field.
-        ("be",  data_width//8) # Byte Enable field.
+        ("dat",     data_width),    # Data field.
+        ("be",      data_width//8), # Byte Enable field.
+        ("bar_hit", 6)              # BAR hit.
     ]
     return EndpointDescription(layout)
 

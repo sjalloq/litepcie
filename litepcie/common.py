@@ -34,7 +34,8 @@ def get_bar_mask(size):
 def phy_layout(data_width):
     layout = [
         ("dat", data_width),
-        ("be",  data_width//8)
+        ("be",  data_width//8),
+        ("bar_hit", 6),
     ]
     return EndpointDescription(layout)
 
@@ -73,6 +74,13 @@ def request_layout(data_width, address_width=32):
         # Internal LitePCIe Routing/Identification.
         ("channel", 8), # Crossbar's channel (Used for internal routing).
         ("user_id", 8), # Packet identification (Used for packet delimitation).
+
+        # BAR hit
+        ("bar_hit", 6),
+
+        # TLP Attributes (active when non-zero).
+        ("attr", 2), # TLP Attr: [0]=No-Snoop (NS), [1]=Relaxed-Ordering (RO).
+        ("at",   2), # Address Type: 00=Untranslated, 01=TransReq, 10=Translated.
     ]
     return EndpointDescription(layout)
 
