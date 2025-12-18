@@ -147,6 +147,8 @@ class LitePCIeWishboneSlave(LiteXModule):
             port.source.tag.eq(0),
             port.source.len.eq(1),
             port.source.dat.eq(self.bus.dat_w),
+            port.source.first_be.eq(0xf),
+            port.source.last_be.eq(0xf),
         ]
         fsm.act("ISSUE-WRITE",
             timeout.wait.eq(1),

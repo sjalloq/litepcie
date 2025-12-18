@@ -152,6 +152,8 @@ class LitePCIeMSIX(LiteXModule):
             port.source.tag.eq(0),
             port.source.len.eq(1),
             port.source.dat.eq(msix_dat),
+            port.source.first_be.eq(0xf),
+            port.source.last_be.eq(0xf),
         ]
         fsm.act("ISSUE-WRITE",
             port.source.valid.eq(~msix_mask),

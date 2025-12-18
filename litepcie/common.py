@@ -81,6 +81,10 @@ def request_layout(data_width, address_width=32):
         # TLP Attributes (active when non-zero).
         ("attr", 2), # TLP Attr: [0]=No-Snoop (NS), [1]=Relaxed-Ordering (RO).
         ("at",   2), # Address Type: 00=Untranslated, 01=TransReq, 10=Translated.
+
+        # Byte Enables (from TLP header).
+        ("first_be", 4),  # First DW byte enables
+        ("last_be",  4),  # Last DW byte enables
     ]
     return EndpointDescription(layout)
 

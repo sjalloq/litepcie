@@ -799,7 +799,8 @@ class LitePCIeTLPPacketizer(LiteXModule):
                 ).Else(
                     tlp_req.fmt.eq( fmt_dict[ f"mem_rd32"]),
                 ),
-                tlp_req.address.eq(req_sink.adr),
+                # AT field goes in bits [1:0], address bits [31:2] go in [31:2]
+                tlp_req.address.eq(Cat(req_sink.at, req_sink.adr[2:])),
             ]
 
             # On Ultrascale(+) / 256/512-bit, force to 64-bit (for 4DWs format).
@@ -815,7 +816,7 @@ class LitePCIeTLPPacketizer(LiteXModule):
                         # Address's MSB on DW2, LSB on DW3 with 64-bit addressing: Requires swap due to
                         # Packetizer's behavior.
                         tlp_req.address[:32].eq(req_sink.adr[32:]),
-                        tlp_req.address[32:].eq(req_sink.adr[:32]),
+                        tlp_req.address[32:].eq(Cat(req_sink.at, req_sink.adr[2:32])),
                         If(req_sink.we,
                             tlp_req.fmt.eq( fmt_dict[ f"mem_wr64"]),
                         ).Else(
@@ -827,7 +828,7 @@ class LitePCIeTLPPacketizer(LiteXModule):
                 # Address width is 32 bits but we force issuing 4DWs TLP
                 self.comb += [
                     tlp_req.address[:32].eq(Constant(0, 32)),
-                    tlp_req.address[32:].eq(req_sink.adr[:32]),
+                    tlp_req.address[32:].eq(Cat(req_sink.at, req_sink.adr[2:32])),
                     If(req_sink.we,
                         tlp_req.fmt.eq( fmt_dict[ f"mem_wr64"]),
                     ).Else(
@@ -844,12 +845,12 @@ class LitePCIeTLPPacketizer(LiteXModule):
 
                 tlp_req.requester_id.eq(req_sink.req_id),
                 tlp_req.tag.eq(req_sink.tag),
+                tlp_req.first_be.eq(req_sink.first_be),
                 If(req_sink.len > 1,
-                    tlp_req.last_be.eq(0xf)
+                    tlp_req.last_be.eq(req_sink.last_be)
                 ).Else(
                     tlp_req.last_be.eq(0x0)
                 ),
-                tlp_req.first_be.eq(0xf),
                 tlp_req.dat.eq(req_sink.dat),
                 If(req_sink.we,
                     If(req_sink.len == 1,

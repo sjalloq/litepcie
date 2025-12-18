@@ -377,6 +377,8 @@ class LitePCIeDMAReader(LiteXModule):
             port.source.len.eq(splitter.source.length[2:]),
             port.source.req_id.eq(endpoint.phy.id),
             port.source.dat.eq(0),
+            port.source.first_be.eq(0xf),
+            port.source.last_be.eq(0xf),
         ]
         fsm.act("MEM-RD-REQ",
             # Request Control-Path.
@@ -493,6 +495,8 @@ class LitePCIeDMAWriter(LiteXModule):
             port.source.tag.eq(0),
             port.source.len.eq(splitter.source.length[2:]),
             port.source.dat.eq(data_fifo.source.data),
+            port.source.first_be.eq(0xf),
+            port.source.last_be.eq(0xf),
         ]
         # Early termination on last (Optional, can be dynamically disabled).
         self.comb += splitter.terminate.eq(data_fifo.source.last & ~splitter.source.last_disable)
@@ -892,6 +896,8 @@ class LitePCIeDMAStatus(LiteXModule):
                 32:              (0x0000_0000 << 32) + self.address_lsb.storage + (offset << 2),
                 64: (self.address_msb.storage << 32) + self.address_lsb.storage + (offset << 2),
             }[address_width]),
+            port.source.first_be.eq(0xf),
+            port.source.last_be.eq(0xf),
         ]
         for n in range(dwords):
             self.sync += port.source.dat[32*n:32*(n+1)].eq(status[offset + n])
