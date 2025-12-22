@@ -36,6 +36,11 @@ def phy_layout(data_width):
         ("dat", data_width),
         ("be",  data_width//8),
         ("bar_hit", 6),
+        # PASID TLP Prefix support (consumed by prefix injector on TX, ignored by PHY).
+        ("pasid_en",    1),  # Include PASID TLP prefix
+        ("pasid_val",  20),  # 20-bit PASID value
+        ("privileged",  1),  # Privileged Mode Requested (PMR)
+        ("execute",     1),  # Execute Requested
     ]
     return EndpointDescription(layout)
 
@@ -85,6 +90,12 @@ def request_layout(data_width, address_width=32):
         # Byte Enables (from TLP header).
         ("first_be", 4),  # First DW byte enables
         ("last_be",  4),  # Last DW byte enables
+
+        # PASID TLP Prefix support.
+        ("pasid_en",    1),  # Include PASID TLP prefix
+        ("pasid_val",  20),  # 20-bit PASID value
+        ("privileged",  1),  # Privileged Mode Requested (PMR)
+        ("execute",     1),  # Execute Requested
     ]
     return EndpointDescription(layout)
 

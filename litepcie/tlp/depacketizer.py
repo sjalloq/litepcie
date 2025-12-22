@@ -317,7 +317,7 @@ class LitePCIeTLPDepacketizer(LiteXModule):
 
         # Source Endpoints.
         for c in capabilities:
-            assert c in ["REQUEST", "COMPLETION", "CONFIGURATION", "PTM"]
+            assert c in ["REQUEST", "COMPLETION", "CONFIGURATION", "PTM", "ATS_INV"]
         if "REQUEST" in capabilities:
             self.req_source  = req_source  = stream.Endpoint(request_layout(data_width))
         if "COMPLETION" in capabilities:
@@ -326,6 +326,8 @@ class LitePCIeTLPDepacketizer(LiteXModule):
             self.conf_source = conf_source = stream.Endpoint(configuration_layout(data_width))
         if "PTM" in capabilities:
             self.ptm_source = ptm_source = stream.Endpoint(ptm_layout(data_width))
+        if "ATS_INV" in capabilities:
+            self.ats_inv_source = ats_inv_source = stream.Endpoint(tlp_ats_inv_layout(data_width))
 
         # # #
 
@@ -368,7 +370,7 @@ class LitePCIeTLPDepacketizer(LiteXModule):
 
         # Connect Header Extracter to Dispatch Sink.
         self.comb += [
-            header_extracter.source.connect(dispatch_sink, keep={"valid", "ready", "first", "last"}),
+            header_extracter.source.connect(dispatch_sink, keep={"valid", "ready", "first", "last", "bar_hit"}),
             tlp_common_header.decode(header, dispatch_sink)
         ]
         self.comb += dword_endianness_swap(
@@ -420,7 +422,7 @@ class LitePCIeTLPDepacketizer(LiteXModule):
                 req_source.dat.eq(tlp_req.dat),
                 req_source.bar_hit.eq(tlp_req.bar_hit),
                 req_source.attr.eq(tlp_req.attr),
-                req_source.at.eq(tlp_req.address[0:2]),
+                req_source.at.eq(tlp_req.at),
                 req_source.first_be.eq(tlp_req.first_be),
                 req_source.last_be.eq(tlp_req.last_be),
             ]
@@ -514,4 +516,35 @@ class LitePCIeTLPDepacketizer(LiteXModule):
                 ptm_source.message_code.eq(tlp_ptm.message_code),
                 ptm_source.master_time.eq(tlp_ptm.master_time),
                 ptm_source.dat.eq(tlp_ptm.dat)
+            ]
+
+        # Decode/Dispatch ATS Invalidation Messages --------------------------------------------------
+
+        if "ATS_INV" in capabilities:
+            self.comb += [
+                If((fmt_type == fmt_type_dict["ats_inv"]) |
+                   (fmt_type == fmt_type_dict["ats_invd"]),
+                    self.dispatcher.sel.eq(dispatch_source_sel("ATS_INV")),
+                )
+            ]
+
+            self.tlp_ats_inv = tlp_ats_inv = stream.Endpoint(tlp_ats_inv_layout(data_width))
+            self.comb += dispatch_sources["ATS_INV"].connect(tlp_ats_inv, omit={"bar_hit"})
+            self.comb += tlp_ats_inv_header.decode(header, tlp_ats_inv)
+
+            self.comb += [
+                ats_inv_source.valid.eq(tlp_ats_inv.valid),
+                tlp_ats_inv.ready.eq(ats_inv_source.ready),
+                ats_inv_source.first.eq(tlp_ats_inv.first),
+                ats_inv_source.last.eq(tlp_ats_inv.last),
+                ats_inv_source.requester_id.eq(tlp_ats_inv.requester_id),
+                ats_inv_source.tag.eq(tlp_ats_inv.tag),
+                ats_inv_source.message_code.eq(tlp_ats_inv.message_code),
+                ats_inv_source.device_id.eq(tlp_ats_inv.device_id),
+                ats_inv_source.itag.eq(tlp_ats_inv.itag),
+                ats_inv_source.s_bit.eq(tlp_ats_inv.s_bit),
+                ats_inv_source.g_bit.eq(tlp_ats_inv.g_bit),
+                ats_inv_source.address.eq(tlp_ats_inv.address),
+                ats_inv_source.length.eq(tlp_ats_inv.length),
+                ats_inv_source.dat.eq(tlp_ats_inv.dat),
             ]

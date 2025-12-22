@@ -54,6 +54,9 @@ fmt_type_dict = {
     "cfg_wr0"  : 0b10_00100, # Configuration Write Request (Type 0).
     "ptm_req"  : 0b01_10100, # PTM Request.
     "ptm_res"  : 0b11_10100, # PTM Response.
+    # ATS Invalidation Messages (routed by ID, type=10010b).
+    "ats_inv"  : 0b01_10010, # ATS Invalidation Request (4DW header, no data).
+    "ats_invd" : 0b11_10010, # ATS Invalidation Request (4DW header, with data).
 }
 
 # Completion Status (cpl) field of Completion TLPs.
@@ -116,6 +119,7 @@ tlp_request_header_fields = {
     "td"           : HeaderField(byte=0*4, offset=15, width= 1), # TLP Digest.
     "ep"           : HeaderField(byte=0*4, offset=14, width= 1), # Poisoned TLP.
     "attr"         : HeaderField(byte=0*4, offset=12, width= 2), # Attributes.
+    "at"           : HeaderField(byte=0*4, offset=10, width= 2), # Address Type.
     "length"       : HeaderField(byte=0*4, offset= 0, width=10), # Length.
 
     "requester_id" : HeaderField(byte=1*4, offset=16, width=16), # Requester ID.
@@ -185,6 +189,41 @@ tlp_ptm_header = Header(
     swap_field_bytes = False # No byte swapping required.
 )
 
+# Length of the TLP ATS Invalidation Message header (in bytes).
+tlp_ats_inv_header_length = 16
+# Define TLP ATS Invalidation Message header fields.
+# ATS Invalidation Request format (PCIe 3.0+):
+# - DW0: fmt[31:29], type[28:24], TC[22:20], TD[15], EP[14], Attr[13:12], Length[9:0]
+# - DW1: Requester ID[31:16], Tag[15:8], Message Code[7:0] (0x01=Inv, 0x02=InvCpl)
+# - DW2: Device ID (Target) [31:16], ITAG[15:11], reserved[10:2], S[1], G[0]
+# - DW3: Untranslated Address [63:32] or [31:12]
+tlp_ats_inv_header_fields = {
+    "fmt"          : HeaderField(byte=0*4, offset=29, width= 2), # Format.
+    "type"         : HeaderField(byte=0*4, offset=24, width= 5), # Type.
+    "tc"           : HeaderField(byte=0*4, offset=20, width= 3), # Traffic Class.
+    "td"           : HeaderField(byte=0*4, offset=15, width= 1), # TLP Digest.
+    "ep"           : HeaderField(byte=0*4, offset=14, width= 1), # Poisoned TLP.
+    "attr"         : HeaderField(byte=0*4, offset=12, width= 2), # Attributes.
+    "length"       : HeaderField(byte=0*4, offset= 0, width=10), # Length.
+
+    "requester_id" : HeaderField(byte=1*4, offset=16, width=16), # Requester ID (TA).
+    "tag"          : HeaderField(byte=1*4, offset= 8, width= 8), # Tag.
+    "message_code" : HeaderField(byte=1*4, offset= 0, width= 8), # Message Code (0x01).
+
+    "device_id"    : HeaderField(byte=2*4, offset=16, width=16), # Target Device ID.
+    "itag"         : HeaderField(byte=2*4, offset=11, width= 5), # Invalidate Tag.
+    "s_bit"        : HeaderField(byte=2*4, offset= 1, width= 1), # Size (0=4KB, 1=use data).
+    "g_bit"        : HeaderField(byte=2*4, offset= 0, width= 1), # Global (ignore PASID).
+
+    "address"      : HeaderField(byte=3*4, offset= 0, width=32), # Address [63:32] or [31:0].
+}
+# Define TLP ATS Invalidation Message header.
+tlp_ats_inv_header = Header(
+    fields           = tlp_ats_inv_header_fields,
+    length           = tlp_ats_inv_header_length,
+    swap_field_bytes = False # No byte swapping required.
+)
+
 # Helpers ------------------------------------------------------------------------------------------
 
 def dword_endianness_swap(src, dst, data_width, endianness, mode="dat", ndwords=None):
@@ -242,7 +281,12 @@ def tlp_raw_layout(data_width):
         ("header",  4*32),          # Header field.
         ("dat",     data_width),    # Data field.
         ("be",      data_width//8), # Byte Enable field.
-        ("bar_hit", 6)              # BAR hit
+        ("bar_hit", 6),             # BAR hit
+        # PASID TLP Prefix support (passed through to phy_layout).
+        ("pasid_en",    1),         # Include PASID TLP prefix
+        ("pasid_val",  20),         # 20-bit PASID value
+        ("privileged",  1),         # Privileged Mode Requested (PMR)
+        ("execute",     1),         # Execute Requested
     ]
     return EndpointDescription(layout)
 
@@ -328,6 +372,23 @@ def tlp_ptm_layout(data_width):
     """
     layout = tlp_ptm_header.get_layout() + [
         ("dat", data_width),   # Data field.
+        ("be",  data_width//8) # Byte Enable field.
+    ]
+    return EndpointDescription(layout)
+
+
+def tlp_ats_inv_layout(data_width):
+    """
+    Generate an ATS Invalidation Message TLP endpoint description.
+
+    Parameters:
+        data_width (int): Width of the data (in bits).
+
+    Returns:
+        EndpointDescription: ATS Invalidation Message TLP endpoint description.
+    """
+    layout = tlp_ats_inv_header.get_layout() + [
+        ("dat", data_width),   # Data field (optional, for extended range).
         ("be",  data_width//8) # Byte Enable field.
     ]
     return EndpointDescription(layout)

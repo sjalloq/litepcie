@@ -60,6 +60,14 @@ class LitePCIeTLPHeaderInserter64b3DWs(LiteXModule):
 
         # # #
 
+        # Pass PASID fields through unchanged.
+        self.comb += [
+            source.pasid_en.eq(sink.pasid_en),
+            source.pasid_val.eq(sink.pasid_val),
+            source.privileged.eq(sink.privileged),
+            source.execute.eq(sink.execute),
+        ]
+
         count = Signal()
         dat   = Signal(64,    reset_less=True)
         be    = Signal(64//8, reset_less=True)
@@ -132,6 +140,14 @@ class LitePCIeTLPHeaderInserter64b4DWs(LiteXModule):
 
         # # #
 
+        # Pass PASID fields through unchanged.
+        self.comb += [
+            source.pasid_en.eq(sink.pasid_en),
+            source.pasid_val.eq(sink.pasid_val),
+            source.privileged.eq(sink.privileged),
+            source.execute.eq(sink.execute),
+        ]
+
         count = Signal()
         self.fsm = fsm = FSM(reset_state="HEADER")
         fsm.act("HEADER",
@@ -199,6 +215,14 @@ class LitePCIeTLPHeaderInserter128b3DWs(LiteXModule):
         self.source = source = stream.Endpoint(phy_layout(128))
 
         # # #
+
+        # Pass PASID fields through unchanged.
+        self.comb += [
+            source.pasid_en.eq(sink.pasid_en),
+            source.pasid_val.eq(sink.pasid_val),
+            source.privileged.eq(sink.privileged),
+            source.execute.eq(sink.execute),
+        ]
 
         dat  = Signal(128,    reset_less=True)
         be   = Signal(128//8, reset_less=True)
@@ -271,6 +295,14 @@ class LitePCIeTLPHeaderInserter128b4DWs(LiteXModule):
 
         # # #
 
+        # Pass PASID fields through unchanged.
+        self.comb += [
+            source.pasid_en.eq(sink.pasid_en),
+            source.pasid_val.eq(sink.pasid_val),
+            source.privileged.eq(sink.privileged),
+            source.execute.eq(sink.execute),
+        ]
+
         self.fsm = fsm = FSM(reset_state="HEADER")
         fsm.act("HEADER",
             sink.ready.eq(1),
@@ -338,6 +370,14 @@ class LitePCIeTLPHeaderInserter256b3DWs(LiteXModule):
         self.source = source = stream.Endpoint(phy_layout(256))
 
         # # #
+
+        # Pass PASID fields through unchanged.
+        self.comb += [
+            source.pasid_en.eq(sink.pasid_en),
+            source.pasid_val.eq(sink.pasid_val),
+            source.privileged.eq(sink.privileged),
+            source.execute.eq(sink.execute),
+        ]
 
         dat  = Signal(256,    reset_less=True)
         be   = Signal(256//8, reset_less=True)
@@ -424,6 +464,14 @@ class LitePCIeTLPHeaderInserter256b4DWs(LiteXModule):
         self.source = source = stream.Endpoint(phy_layout(256))
 
         # # #
+
+        # Pass PASID fields through unchanged.
+        self.comb += [
+            source.pasid_en.eq(sink.pasid_en),
+            source.pasid_val.eq(sink.pasid_val),
+            source.privileged.eq(sink.privileged),
+            source.execute.eq(sink.execute),
+        ]
 
         dat  = Signal(256,    reset_less=True)
         be   = Signal(256//8, reset_less=True)
@@ -521,6 +569,14 @@ class LitePCIeTLPHeaderInserter512b3DWs(LiteXModule):
         self.source = source = stream.Endpoint(phy_layout(512))
 
         # # #
+
+        # Pass PASID fields through unchanged.
+        self.comb += [
+            source.pasid_en.eq(sink.pasid_en),
+            source.pasid_val.eq(sink.pasid_val),
+            source.privileged.eq(sink.privileged),
+            source.execute.eq(sink.execute),
+        ]
 
         dat  = Signal(512,    reset_less=True)
         be   = Signal(512//8, reset_less=True)
@@ -639,6 +695,14 @@ class LitePCIeTLPHeaderInserter512b4DWs(LiteXModule):
         self.source = source = stream.Endpoint(phy_layout(512))
 
         # # #
+
+        # Pass PASID fields through unchanged.
+        self.comb += [
+            source.pasid_en.eq(sink.pasid_en),
+            source.pasid_val.eq(sink.pasid_val),
+            source.privileged.eq(sink.privileged),
+            source.execute.eq(sink.execute),
+        ]
 
         dat  = Signal(512,    reset_less=True)
         be   = Signal(512//8, reset_less=True)
@@ -869,6 +933,11 @@ class LitePCIeTLPPacketizer(LiteXModule):
                 tlp_req.connect(tlp_raw_req, omit={*tlp_request_header_fields.keys()}),
                 tlp_raw_req.fmt.eq(tlp_req.fmt),
                 tlp_request_header.encode(tlp_req, tlp_raw_req_header),
+                # Pass PASID fields from request sink directly to raw TLP (skipping tlp_req).
+                tlp_raw_req.pasid_en.eq(req_sink.pasid_en),
+                tlp_raw_req.pasid_val.eq(req_sink.pasid_val),
+                tlp_raw_req.privileged.eq(req_sink.privileged),
+                tlp_raw_req.execute.eq(req_sink.execute),
             ]
             self.comb += dword_endianness_swap(
                 src        = tlp_raw_req_header,
