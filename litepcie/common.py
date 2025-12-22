@@ -129,6 +129,10 @@ def ptm_layout(data_width):
 def msi_layout():
     return [("dat", 8)]
 
+def intx_layout():
+    """Layout for legacy INTx interrupt stream."""
+    return [("level", 1)]  # 1 = assert INTx, 0 = deassert INTx
+
 def dma_layout(data_width):
     layout = [("data", data_width)]
     return EndpointDescription(layout)

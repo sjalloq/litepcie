@@ -37,6 +37,7 @@ class S7PCIEPHY(LiteXModule):
         self.sink   = stream.Endpoint(phy_layout(data_width))
         self.source = stream.Endpoint(phy_layout(data_width))
         self.msi    = stream.Endpoint(msi_layout())
+        self.intx   = stream.Endpoint(intx_layout())
 
         # Registers --------------------------------------------------------------------------------
         self._link_status = CSRStatus(fields=[
@@ -132,6 +133,26 @@ class S7PCIEPHY(LiteXModule):
             )
             self.comb += self.msi.connect(msi_cdc.sink)
             cfg_msi = msi_cdc.source
+
+        # INTx CDC (FPGA --> HOST) -----------------------------------------------------------------
+        if cd == "pcie":
+            cfg_intx = self.intx
+        else:
+            self.intx_cdc = intx_cdc = stream.ClockDomainCrossing(
+                layout          = intx_layout(),
+                cd_from         = cd,
+                cd_to           = "pcie",
+                with_common_rst = True,
+            )
+            self.comb += self.intx.connect(intx_cdc.sink)
+            cfg_intx = intx_cdc.source
+
+        # Interrupt ready fanout (shared between MSI and INTx) ------------------------------------
+        cfg_interrupt_rdy = Signal()
+        self.comb += [
+            cfg_msi.ready.eq(cfg_interrupt_rdy),
+            cfg_intx.ready.eq(cfg_interrupt_rdy),
+        ]
 
         # Hard IP Configuration --------------------------------------------------------------------
 
@@ -332,9 +353,9 @@ class S7PCIEPHY(LiteXModule):
             i_cfg_pm_wake                                = 0,
 
             # Interrupt Interface ------------------------------------------------------------------
-            i_cfg_interrupt                              = cfg_msi.valid,
-            o_cfg_interrupt_rdy                          = cfg_msi.ready,
-            i_cfg_interrupt_assert                       = 0,
+            i_cfg_interrupt                              = cfg_msi.valid | cfg_intx.valid,
+            o_cfg_interrupt_rdy                          = cfg_interrupt_rdy,
+            i_cfg_interrupt_assert                       = cfg_intx.level,
             i_cfg_interrupt_di                           = cfg_msi.dat,
             o_cfg_interrupt_do                           = Open(),
             o_cfg_interrupt_mmenable                     = Open(),
