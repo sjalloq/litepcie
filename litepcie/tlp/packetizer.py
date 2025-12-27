@@ -982,7 +982,7 @@ class LitePCIeTLPPacketizer(LiteXModule):
                 tlp_cmp.lower_address.eq(cmp_sink.adr),
 
                 tlp_cmp.dat.eq(cmp_sink.dat),
-                If(cmp_sink.last & cmp_sink.first,
+                If(cmp_sink.len == 1,
                     tlp_cmp.be.eq(0xf)
                 ).Else(
                     tlp_cmp.be.eq(2**(data_width//8)-1)
