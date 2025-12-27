@@ -863,8 +863,8 @@ class LitePCIeTLPPacketizer(LiteXModule):
                 ).Else(
                     tlp_req.fmt.eq( fmt_dict[ f"mem_rd32"]),
                 ),
-                # AT field goes in bits [1:0], address bits [31:2] go in [31:2]
-                tlp_req.address.eq(Cat(req_sink.at, req_sink.adr[2:])),
+                # Address bits [31:2] go in [31:2], bits [1:0] are reserved (0)
+                tlp_req.address.eq(req_sink.adr & ~0x3),
             ]
 
             # On Ultrascale(+) / 256/512-bit, force to 64-bit (for 4DWs format).
@@ -880,7 +880,7 @@ class LitePCIeTLPPacketizer(LiteXModule):
                         # Address's MSB on DW2, LSB on DW3 with 64-bit addressing: Requires swap due to
                         # Packetizer's behavior.
                         tlp_req.address[:32].eq(req_sink.adr[32:]),
-                        tlp_req.address[32:].eq(Cat(req_sink.at, req_sink.adr[2:32])),
+                        tlp_req.address[32:].eq(req_sink.adr[2:32] << 2),
                         If(req_sink.we,
                             tlp_req.fmt.eq( fmt_dict[ f"mem_wr64"]),
                         ).Else(
@@ -892,7 +892,7 @@ class LitePCIeTLPPacketizer(LiteXModule):
                 # Address width is 32 bits but we force issuing 4DWs TLP
                 self.comb += [
                     tlp_req.address[:32].eq(Constant(0, 32)),
-                    tlp_req.address[32:].eq(Cat(req_sink.at, req_sink.adr[2:32])),
+                    tlp_req.address[32:].eq(req_sink.adr[2:32] << 2),
                     If(req_sink.we,
                         tlp_req.fmt.eq( fmt_dict[ f"mem_wr64"]),
                     ).Else(
@@ -905,6 +905,7 @@ class LitePCIeTLPPacketizer(LiteXModule):
                 tlp_req.td.eq(0),
                 tlp_req.ep.eq(0),
                 tlp_req.attr.eq(req_sink.attr),
+                tlp_req.at.eq(req_sink.at),
                 tlp_req.length.eq(req_sink.len),
 
                 tlp_req.requester_id.eq(req_sink.req_id),
