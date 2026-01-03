@@ -453,7 +453,9 @@ class LitePCIeTLPDepacketizer(LiteXModule):
                 cmp_source.cmp_id.eq(tlp_cmp.completer_id),
                 cmp_source.err.eq(tlp_cmp.status != 0),
                 cmp_source.tag.eq(tlp_cmp.tag),
-                cmp_source.dat.eq(tlp_cmp.dat)
+                cmp_source.dat.eq(tlp_cmp.dat),
+                cmp_source.status.eq(tlp_cmp.status),
+                cmp_source.byte_count.eq(tlp_cmp.byte_count),
             ]
 
 

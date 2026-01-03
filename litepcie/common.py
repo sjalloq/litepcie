@@ -109,6 +109,8 @@ def completion_layout(data_width, address_width=32):
         ("end",              1), # Completion end (Current packet is the last).
         ("err",              1), # Completion error.
         ("tag",              8), # Completion tag.
+        ("status",           3), # Completion status (0=SC, 1=UR, 2=CRS, 4=CA).
+        ("byte_count",      12), # Byte count remaining.
 
         # Data Stream.
         ("dat",     data_width),

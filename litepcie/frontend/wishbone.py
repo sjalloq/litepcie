@@ -89,6 +89,8 @@ class LitePCIeWishboneMaster(LiteXModule):
             port.source.last.eq(1),
             port.source.len.eq(1),
             port.source.err.eq(0),
+            port.source.status.eq(0),       # SC (Successful Completion)
+            port.source.byte_count.eq(4),   # 4 bytes for 1 DW read
             port.source.tag.eq(port.sink.tag),
             port.source.adr.eq(port.sink.adr),
             port.source.cmp_id.eq(endpoint.phy.id),
