@@ -19,12 +19,14 @@ class LitePCIeTLPHeaderExtracter64b(LiteXModule):
 
         # # #
 
-        first   = Signal()
-        last    = Signal()
-        count   = Signal()
-        dat     = Signal(64,    reset_less=True)
-        be      = Signal(64//8, reset_less=True)
-        bar_hit = Signal(6,     reset_less=True)
+        first       = Signal()
+        last        = Signal()
+        count       = Signal()
+        dat         = Signal(64,    reset_less=True)
+        be          = Signal(64//8, reset_less=True)
+        bar_hit     = Signal(6,     reset_less=True)
+        extra       = Signal()
+        payload_odd = Signal()
         self.sync += \
             If(sink.valid & sink.ready,
                 dat.eq(sink.dat),
@@ -36,7 +38,9 @@ class LitePCIeTLPHeaderExtracter64b(LiteXModule):
         fsm.act("IDLE",
             NextValue(first, 1),
             NextValue(last,  0),
+            NextValue(extra, 0),
             NextValue(count, 0),
+            NextValue(payload_odd, 0),
             If(sink.valid, NextState("HEADER"))
         )
         fsm.act("HEADER",
@@ -48,26 +52,35 @@ class LitePCIeTLPHeaderExtracter64b(LiteXModule):
                 NextValue(source.header[32*2:32*3],      sink.dat[32*0:32*1]),
                 NextValue(source.header[32*3:32*4],      sink.dat[32*1:32*2]),
                 If(count,
+                    # 3DW headers on 64-bit PHY shift payload by one DWORD.
+                    # For odd-DW payloads with data (MWr32), flush the final upper DWORD.
+                    # Length LSB is DW0[0], Data Present is DW0[30] (fmt[1]).
+                    NextValue(payload_odd, dat[0] & dat[30]),
                     If(sink.last, NextValue(last, 1)),
                     NextState("COPY")
                 )
             )
         )
         fsm.act("COPY",
-            source.valid.eq(sink.valid | last),
+            source.valid.eq(sink.valid | last | extra),
             source.first.eq(first),
-            source.last.eq(sink.last | last),
+            source.last.eq((sink.last & ~payload_odd) | last | extra),
             If(source.valid & source.ready,
                 NextValue(first, 0),
-                sink.ready.eq(1 & ~last), # already acked when last is 1
+                sink.ready.eq(1 & ~last & ~extra), # already acked when last/extra is 1
+                If(sink.valid & sink.ready & sink.last & payload_odd,
+                    NextValue(extra, 1),
+                ).Elif(extra,
+                    NextValue(extra, 0),
+                ),
                 If(source.last, NextState("IDLE"))
             )
         )
         self.comb += [
             source.dat[32*0:32*1].eq(     dat[32*1:32*2]),
-            source.dat[32*1:32*2].eq(sink.dat[32*0:32*1]),
+            source.dat[32*1:32*2].eq(Mux(extra, 0, sink.dat[32*0:32*1])),
             source.be[  4*0: 4*1].eq(     be[4*1:4*2]),
-            source.be[  4*1: 4*2].eq(sink.be[4*0:4*1]),
+            source.be[  4*1: 4*2].eq(Mux(extra, 0, sink.be[4*0:4*1])),
 
             source.bar_hit.eq(bar_hit),
         ]
