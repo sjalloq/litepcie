@@ -105,7 +105,7 @@ tlp_configuration_header_fields = {
     "bus_number"   : HeaderField(byte=2*4, offset=24, width= 8), # Bus number.
     "device_no"    : HeaderField(byte=2*4, offset=19, width= 5), # Device number.
     "func"         : HeaderField(byte=2*4, offset=16, width= 3), # Function number.
-    "ext_reg"      : HeaderField(byte=2*4, offset= 8, width= 3), # Extended Register.
+    "ext_reg"      : HeaderField(byte=2*4, offset= 8, width= 4), # Extended Register.
     "register_no"  : HeaderField(byte=2*4, offset= 2, width= 6), # Register number.
 }
 # Define TLP configuration header.
