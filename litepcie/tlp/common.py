@@ -24,6 +24,8 @@ fmt_dict = {
     "cpl"      : 0b00, # Completion without Data.
     "cfg_rd0"  : 0b00, # Configuration Read Request (Type 0).
     "cfg_wr0"  : 0b10, # Configuration Write Request (Type 0).
+    "cfg_rd1"  : 0b00, # Configuration Read Request (Type 1).
+    "cfg_wr1"  : 0b10, # Configuration Write Request (Type 1).
     "ptm_req"  : 0b01, # PTM Request.
     "ptm_res"  : 0b11, # PTM Response.
 }
@@ -38,6 +40,8 @@ type_dict = {
     "cpl"      : 0b01010, # Completion without Data.
     "cfg_rd0"  : 0b00100, # Configuration Read Request (Type 0).
     "cfg_wr0"  : 0b00100, # Configuration Write Request (Type 0).
+    "cfg_rd1"  : 0b00101, # Configuration Read Request (Type 1).
+    "cfg_wr1"  : 0b00101, # Configuration Write Request (Type 1).
     "ptm_req"  : 0b10100, # PTM Request.
     "ptm_res"  : 0b10100, # PTM Response.
 }
@@ -52,6 +56,8 @@ fmt_type_dict = {
     "cpl"      : 0b00_01010, # Completion without Data.
     "cfg_rd0"  : 0b00_00100, # Configuration Read Request (Type 0).
     "cfg_wr0"  : 0b10_00100, # Configuration Write Request (Type 0).
+    "cfg_rd1"  : 0b00_00101, # Configuration Read Request (Type 1).
+    "cfg_wr1"  : 0b10_00101, # Configuration Write Request (Type 1).
     "ptm_req"  : 0b01_10100, # PTM Request.
     "ptm_res"  : 0b11_10100, # PTM Response.
     # ATS Invalidation Messages (routed by ID, type=10010b).

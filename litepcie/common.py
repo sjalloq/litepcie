@@ -49,12 +49,14 @@ def configuration_layout(data_width, address_width=32):
         # Request Parameters.
         ("req_id",          16), # Requester ID.
         ("we",               1), # Configuration type; 0 : Read / 1 : Write.
+        ("cfg_type",         1), # Configuration type; 0 : Type0 / 1 : Type1.
         ("bus_number",       8), # Configuration Bus number.
         ("device_no",        5), # Configuration Device number.
         ("func",             3), # Configuration Function number.
         ("ext_reg",          3), # Configuration Extended Register.
         ("register_no",      6), # Configuration Register number.
         ("tag",              8), # Configuration tag.
+        ("first_be",         4), # Configuration First Byte Enable.
 
         # Data Stream.
         ("dat", data_width),

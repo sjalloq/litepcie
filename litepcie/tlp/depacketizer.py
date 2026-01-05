@@ -477,13 +477,15 @@ class LitePCIeTLPDepacketizer(LiteXModule):
         if "CONFIGURATION" in capabilities:
             self.comb += [
                 If((fmt_type == fmt_type_dict["cfg_rd0"]) |
-                   (fmt_type == fmt_type_dict["cfg_wr0"]),
+                   (fmt_type == fmt_type_dict["cfg_wr0"]) |
+                   (fmt_type == fmt_type_dict["cfg_rd1"]) |
+                   (fmt_type == fmt_type_dict["cfg_wr1"]),
                     self.dispatcher.sel.eq(dispatch_source_sel("CONFIGURATION")),
                 )
             ]
 
             self.tlp_conf = tlp_conf = stream.Endpoint(tlp_configuration_layout(data_width))
-            self.comb += dispatch_sources["CONFIGURATION"].connect(tlp_conf)
+            self.comb += dispatch_sources["CONFIGURATION"].connect(tlp_conf, omit={"bar_hit"})
             self.comb += tlp_configuration_header.decode(header, tlp_conf)
 
             self.comb += [
@@ -491,12 +493,16 @@ class LitePCIeTLPDepacketizer(LiteXModule):
                 tlp_conf.ready.eq(conf_source.ready),
                 conf_source.first.eq(tlp_conf.first),
                 conf_source.last.eq(tlp_conf.last),
-                If(fmt_type == fmt_type_dict["cfg_rd0"],
+                If((fmt_type == fmt_type_dict["cfg_rd0"]) |
+                   (fmt_type == fmt_type_dict["cfg_rd1"]),
                     conf_source.we.eq(0)
                 ),
-                If(fmt_type == fmt_type_dict["cfg_wr0"],
+                If((fmt_type == fmt_type_dict["cfg_wr0"]) |
+                   (fmt_type == fmt_type_dict["cfg_wr1"]),
                     conf_source.we.eq(1)
                 ),
+                conf_source.cfg_type.eq((fmt_type == fmt_type_dict["cfg_rd1"]) |
+                                        (fmt_type == fmt_type_dict["cfg_wr1"])),
                 conf_source.req_id.eq(tlp_conf.requester_id),
                 conf_source.bus_number.eq(tlp_conf.bus_number),
                 conf_source.device_no.eq(tlp_conf.device_no),
@@ -504,6 +510,7 @@ class LitePCIeTLPDepacketizer(LiteXModule):
                 conf_source.ext_reg.eq(tlp_conf.ext_reg),
                 conf_source.register_no.eq(tlp_conf.register_no),
                 conf_source.tag.eq(tlp_conf.tag),
+                conf_source.first_be.eq(tlp_conf.first_be),
                 conf_source.dat.eq(tlp_conf.dat)
             ]
 
