@@ -63,6 +63,26 @@ class S7PCIEPHY(LiteXModule):
         self._max_request_size  = CSRStatus(16, description="Negiotiated Max Request Size (in bytes).")
         self._max_payload_size  = CSRStatus(16, description="Negiotiated Max Payload Size (in bytes).")
 
+        # Error injection interface (AER/DPC).
+        self.cfg_err_ecrc                  = Signal()
+        self.cfg_err_ur                    = Signal()
+        self.cfg_err_cpl_timeout           = Signal()
+        self.cfg_err_cpl_unexpect          = Signal()
+        self.cfg_err_cpl_abort             = Signal()
+        self.cfg_err_posted                = Signal()
+        self.cfg_err_cor                   = Signal()
+        self.cfg_err_atomic_egress_blocked = Signal()
+        self.cfg_err_internal_cor          = Signal()
+        self.cfg_err_malformed             = Signal()
+        self.cfg_err_mc_blocked            = Signal()
+        self.cfg_err_poisoned              = Signal()
+        self.cfg_err_norecovery            = Signal()
+        self.cfg_err_tlp_cpl_header        = Signal(48)
+        self.cfg_err_locked                = Signal()
+        self.cfg_err_acs                   = Signal()
+        self.cfg_err_internal_uncor        = Signal()
+        self.cfg_err_aer_headerlog         = Signal(128)
+
         # Parameters/Locals ------------------------------------------------------------------------
         if pcie_data_width is None: pcie_data_width = data_width
         self.platform         = platform
@@ -313,27 +333,27 @@ class S7PCIEPHY(LiteXModule):
             i_cfg_mgmt_wr_rw1c_as_rw                     = 0,
 
             # Error Reporting Interface ------------------------------------------------------------
-            i_cfg_err_ecrc                               = 0,
-            i_cfg_err_ur                                 = 0,
-            i_cfg_err_cpl_timeout                        = 0,
-            i_cfg_err_cpl_unexpect                       = 0,
-            i_cfg_err_cpl_abort                          = 0,
-            i_cfg_err_posted                             = 0,
-            i_cfg_err_cor                                = 0,
-            i_cfg_err_atomic_egress_blocked              = 0,
-            i_cfg_err_internal_cor                       = 0,
-            i_cfg_err_malformed                          = 0,
-            i_cfg_err_mc_blocked                         = 0,
-            i_cfg_err_poisoned                           = 0,
-            i_cfg_err_norecovery                         = 0,
-            i_cfg_err_tlp_cpl_header                     = 0,
+            i_cfg_err_ecrc                               = self.cfg_err_ecrc,
+            i_cfg_err_ur                                 = self.cfg_err_ur,
+            i_cfg_err_cpl_timeout                        = self.cfg_err_cpl_timeout,
+            i_cfg_err_cpl_unexpect                       = self.cfg_err_cpl_unexpect,
+            i_cfg_err_cpl_abort                          = self.cfg_err_cpl_abort,
+            i_cfg_err_posted                             = self.cfg_err_posted,
+            i_cfg_err_cor                                = self.cfg_err_cor,
+            i_cfg_err_atomic_egress_blocked              = self.cfg_err_atomic_egress_blocked,
+            i_cfg_err_internal_cor                       = self.cfg_err_internal_cor,
+            i_cfg_err_malformed                          = self.cfg_err_malformed,
+            i_cfg_err_mc_blocked                         = self.cfg_err_mc_blocked,
+            i_cfg_err_poisoned                           = self.cfg_err_poisoned,
+            i_cfg_err_norecovery                         = self.cfg_err_norecovery,
+            i_cfg_err_tlp_cpl_header                     = self.cfg_err_tlp_cpl_header,
             o_cfg_err_cpl_rdy                            = Open(),
-            i_cfg_err_locked                             = 0,
-            i_cfg_err_acs                                = 0,
-            i_cfg_err_internal_uncor                     = 0,
+            i_cfg_err_locked                             = self.cfg_err_locked,
+            i_cfg_err_acs                                = self.cfg_err_acs,
+            i_cfg_err_internal_uncor                     = self.cfg_err_internal_uncor,
 
             # AER interface ------------------------------------------------------------------------
-            i_cfg_err_aer_headerlog                      = 0,
+            i_cfg_err_aer_headerlog                      = self.cfg_err_aer_headerlog,
             i_cfg_aer_interrupt_msgnum                   = 0,
             o_cfg_err_aer_headerlog_set                  = Open(),
             o_cfg_aer_ecrc_check_en                      = Open(),
