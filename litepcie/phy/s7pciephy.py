@@ -206,6 +206,7 @@ class S7PCIEPHY(LiteXModule):
         pipe_txoutclk      = Signal()
         pipe_txoutclk_bufg = Signal()
         pipe_pclk_sel      = Signal(nlanes)
+        pipe_dclk          = Signal()
 
         # Clock Domains.
         self.cd_clk125   = ClockDomain()
@@ -250,6 +251,16 @@ class S7PCIEPHY(LiteXModule):
         pclk_sel.attr.add("keep")
         platform.add_platform_command("set_false_path -through [get_nets {{*pclk_sel}}]")
 
+        # Buffer pipe_dclk if the MMCM clkout is unbuffered.  Removing the MMCM BUFGs fixes pulse width
+        # timing violations due to skew but means the DRPCLK to the GTPE2 needs to be buffered.
+        if not mmcm_clk125_buf:
+            self.specials += Instance("BUFG",
+                i_I = ClockSignal("clk125"),
+                o_O = pipe_dclk,
+            )
+        else:
+            pipe_dclk = ClockSignal("clk125")
+
         # Hard IP ----------------------------------------------------------------------------------
         m_axis_rx_tlast = Signal()
         m_axis_rx_tuser = Signal(32)
@@ -276,7 +287,7 @@ class S7PCIEPHY(LiteXModule):
             o_pipe_gen3_out                              = Open(),
             i_pipe_rxusrclk_in                           = ClockSignal("pclk"),
             i_pipe_rxoutclk_in                           = 0,
-            i_pipe_dclk_in                               = ClockSignal("clk125"),
+            i_pipe_dclk_in                               = pipe_dclk,
             i_pipe_userclk1_in                           = ClockSignal("userclk1"),
             i_pipe_userclk2_in                           = ClockSignal("userclk2"),
             i_pipe_oobclk_in                             = ClockSignal("pclk"),
