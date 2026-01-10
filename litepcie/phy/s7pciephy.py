@@ -480,18 +480,19 @@ class S7PCIEPHY(LiteXModule):
             o_pcie_drp_rdy                               = Open(),
             o_pcie_drp_do                                = Open(),
         )
-        rx_is_sof  = m_axis_rx_tuser[10:15] # Start of a new packet header in m_axis_rx_tdata.
-        rx_is_eof  = m_axis_rx_tuser[17:22] # End of a packet in m_axis_rx_tdata.
-        rx_bar_hit = m_axis_rx_tuser[2:8]   # BAR hit decode: rx_bar_hit[5:0] maps to { BAR5, BAR4, ... BAR0 } 
+        rx_bar_hit = m_axis_rx_tuser[2:8]   # BAR hit decode: rx_bar_hit[5:0] maps to { BAR5, BAR4, ... BAR0 }
         if pcie_data_width == 128:
+            rx_is_sof = m_axis_rx_tuser[10:15] # Start of a new packet header in m_axis_rx_tdata.
+            rx_is_eof = m_axis_rx_tuser[17:22] # End of a packet in m_axis_rx_tdata.
             self.comb += [
-                m_axis_rx.first.eq(rx_is_sof[-1]),
+                m_axis_rx.first.eq(rx_is_sof[-1]), # Used by aligner for mid-beat TLP detection
                 m_axis_rx.last.eq( rx_is_eof[-1]),
                 m_axis_rx.bar_hit.eq(rx_bar_hit),
                 If(rx_is_sof == 0b11000, self.rx_datapath.aligner.first_dword.eq(2)),
             ]
         else:
             self.comb += [
+                # first is unused for 64-bit; only needed by 128-bit aligner for mid-beat TLP detection
                 m_axis_rx.first.eq(0),
                 m_axis_rx.last.eq(m_axis_rx_tlast),
                 m_axis_rx.bar_hit.eq(rx_bar_hit)

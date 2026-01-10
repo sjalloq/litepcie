@@ -31,7 +31,6 @@ class LitePCIeTLPHeaderExtracter64b(LiteXModule):
             If(sink.valid & sink.ready,
                 dat.eq(sink.dat),
                 be.eq(sink.be),
-                If(sink.first, bar_hit.eq(sink.bar_hit))
             )
 
         self.fsm = fsm = FSM(reset_state="IDLE")
@@ -41,7 +40,10 @@ class LitePCIeTLPHeaderExtracter64b(LiteXModule):
             NextValue(extra, 0),
             NextValue(count, 0),
             NextValue(payload_odd, 0),
-            If(sink.valid, NextState("HEADER"))
+            If(sink.valid,
+                NextValue(bar_hit, sink.bar_hit),
+                NextState("HEADER"),
+            )
         )
         fsm.act("HEADER",
             sink.ready.eq(1),
@@ -103,7 +105,6 @@ class LitePCIeTLPHeaderExtracter128b(LiteXModule):
             If(sink.valid & sink.ready,
                 dat.eq(sink.dat),
                 be.eq(sink.be),
-                If(sink.first, bar_hit.eq(sink.bar_hit))
             )
 
         self.fsm = fsm = FSM(reset_state="IDLE")
@@ -111,7 +112,8 @@ class LitePCIeTLPHeaderExtracter128b(LiteXModule):
             NextValue(first, 1),
             NextValue(last,  0),
             If(sink.valid,
-                NextState("HEADER")
+                NextValue(bar_hit, sink.bar_hit),
+                NextState("HEADER"),
             )
         )
         fsm.act("HEADER",
@@ -170,7 +172,6 @@ class LitePCIeTLPHeaderExtracter256b(LiteXModule):
             If(sink.valid & sink.ready,
                 dat.eq(sink.dat),
                 be.eq(sink.be),
-                If(sink.first, bar_hit.eq(sink.bar_hit))
             )
 
         self.fsm = fsm = FSM(reset_state="IDLE")
@@ -178,7 +179,8 @@ class LitePCIeTLPHeaderExtracter256b(LiteXModule):
             NextValue(first, 1),
             NextValue(last,  0),
             If(sink.valid,
-                NextState("HEADER")
+                NextValue(bar_hit, sink.bar_hit),
+                NextState("HEADER"),
             )
         )
         fsm.act("HEADER",
@@ -246,7 +248,6 @@ class LitePCIeTLPHeaderExtracter512b(LiteXModule):
             If(sink.valid & sink.ready,
                 dat.eq(sink.dat),
                 be.eq(sink.be),
-                If(sink.first, bar_hit.eq(sink.bar_hit))
             )
 
         self.fsm = fsm = FSM(reset_state="IDLE")
@@ -254,7 +255,8 @@ class LitePCIeTLPHeaderExtracter512b(LiteXModule):
             NextValue(first, 1),
             NextValue(last,  0),
             If(sink.valid,
-                NextState("HEADER")
+                NextValue(bar_hit, sink.bar_hit),
+                NextState("HEADER"),
             )
         )
         fsm.act("HEADER",
